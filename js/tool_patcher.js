@@ -41,8 +41,18 @@ function loadFirmwareFromUrl(theUrl)
     log("Loading file from url: "+ theUrl+'\n')
     let res = null;
 
-    fetch('https://corsproxy.egzi.ovh/' + theUrl).catch(err => {
-        return fetch('https://api.codetabs.com/v1/proxy?quest=' + theUrl);
+    fetch(theUrl).then(res => {
+        if (! res.ok) throw res;
+        return res;
+    }).catch(err => {
+        console.warn("Failed to fetch firmware without CORS proxy, retry with corsproxy.egzi.ovh");
+        return fetch('https://corsproxy.egzi.ovh/' + theUrl).then(res => {
+            if (! res.ok) throw res;
+            return res;
+        }).catch(err => {
+            console.warn("Failed to fetch firmware with corsproxy.egzi.ovh, retry with api.codetabs.com");
+            return fetch('https://api.codetabs.com/v1/proxy?quest=' + theUrl);
+        });
     })
     .then(res => {
         if (res.ok) {
